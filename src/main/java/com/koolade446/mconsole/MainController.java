@@ -89,7 +89,7 @@ public class MainController {
             localConfig = new HashMap<>();
             dataFile = new File("./MConsole-Data/data.dat");
             endpoints = new String[]{
-                    "servers/spigot",
+                    "servers/purpur",
                     "servers/paper",
                     "vanilla/vanilla",
                     "vanilla/snapshot",
