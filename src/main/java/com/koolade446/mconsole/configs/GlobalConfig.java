@@ -8,9 +8,9 @@ import java.util.HashMap;
 public class GlobalConfig extends HashMap<String, String> {
     private final File file;
 
-    public GlobalConfig(String path) {
-        Path path1 = Path.of(System.getProperty("user.dir"), "path");
-        this.file = path1.toFile();
+    public GlobalConfig(Path path) {
+        path = Path.of(System.getProperty("user.dir"), path.toString());
+        this.file = path.toFile();
 
         if (file.exists()) {read();}
         else {create();}

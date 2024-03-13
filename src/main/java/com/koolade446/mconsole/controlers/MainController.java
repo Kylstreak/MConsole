@@ -1,12 +1,11 @@
 package com.koolade446.mconsole.controlers;
 
-import com.koolade446.mconsole.ApplicationMain;
-import com.koolade446.mconsole.Verifier;
+import com.koolade446.mconsole.Application;
 import com.koolade446.mconsole.api.API;
 import com.koolade446.mconsole.configs.GlobalConfig;
 import com.koolade446.mconsole.console.Console;
-import com.koolade446.mconsole.console.Sender;
-import javafx.application.Platform;
+import com.koolade446.mconsole.profiles.Profile;
+import com.koolade446.mconsole.profiles.Profiles;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -20,39 +19,21 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.json.JSONObject;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.io.IOException;
+import java.nio.file.Paths;
 
 public class MainController {
 
     //FXML GUI variables
-    @FXML
-    public ComboBox<String> typeBox;
-    @FXML
-    public ComboBox<String> versionBox;
     @FXML
     public TextArea visualConsole;
     @FXML
     public Button startStopButton;
     @FXML
     public Button killButton;
-    @FXML
-    Button changeVersionButton;
-    @FXML
-    Label pathContainer;
+    public MenuButton profileSelector;
+    public MenuItem createProfileButton;
     @FXML
     TextField commandBox;
     @FXML
@@ -64,100 +45,32 @@ public class MainController {
     @FXML
     ComboBox<String> ramTypeBox;
 
-    //private variables
-//    private final Map<String, List<String>> typeMap; TERM
-    private final API API;
     public final GlobalConfig globalConfig;
-    //private final File dataFile; TERM
-    //private final String[] endpoints; TERM
-//    private final Map<String, String> staticVars = new HashMap<>(); Vacate to Configs
-    private final ExecutorService executorService;
-//    private File serverJar; Vacate to Profiles system
 
-    //Public variables
-//    public final Map<String, String> config; Vacate to Profiles system
-//    public Path directoryPath; TERM
-    public Process process;
-//    public File localDataFile; TERM
-    public PrintWriter outputStreamWriter;
     private final Console console;
+    public final API API;
+    public final Profiles profiles;
+    public Profile activeProfile;
 
 
     //Initializes our variables
     public MainController() {
         console = new Console(visualConsole);
         API = new API();
-        globalConfig = new GlobalConfig("\\MConsole\\data.dat");
-
-
-        executorService = Executors.newFixedThreadPool(1);
-//            directoryPath = Path.of(new File(".").getCanonicalPath());
-//            serverJar = new File(directoryPath + "/server.jar"); Vacate to profiles system
-        outputStreamWriter = null;
-//            config = new HashMap<>(); TERM
-//            localConfig = new HashMap<>(); TERM
-//            dataFile = new File("./MConsole-Data/data.dat"); TERM
-
-
-//            endpoints = new String[]{
-//                    "servers/purpur",
-//                    "servers/paper",
-//                    "vanilla/vanilla",
-//                    "vanilla/snapshot",
-//                    "modded/forge",
-//                    "modded/fabric"
-//            }; TERM
-
-//            staticVars.put("current", new File(".").getCanonicalPath());
-//            staticVars.put("home", new File(System.getProperty("user.home")).getCanonicalPath());
-//            staticVars.put("minecraft", new File(System.getenv("APPDATA") + "/.minecraft").getCanonicalPath()); TERM
+        globalConfig = new GlobalConfig(Paths.get("mconsole", "config.dat"));
+        profiles = new Profiles().load();
+        if (globalConfig.get("profile") != null) {
+            activeProfile = profiles.get(globalConfig.get("profile"));
+            activeProfile.load();
+        }
     }
 
     //Initialize our GUI
     public void initialize() {
         startStopButton.setStyle("-fx-background-image: url('power.png')");
         killButton.setStyle("-fx-background-image: url('kill.png')");
-//        pathContainer.setText(directoryPath.toString()); TERM
 
-//        readOrCreateConfig(); TERM
-
-//        directoryPath = Path.of(config.get("path")); TERM
-//        pathContainer.setText(directoryPath.toString()); Depreciated
-//        serverJar = new File(directoryPath + "/server.jar"); Vacate to Profiles system
-//        localDataFile = new File(directoryPath + File.separator + "mconsole/mconsole.dat"); Vacate to Profiles system
-
-//         TERM
-
-//        try {
-//            for (String endpoint : endpoints) {
-//                List<String> l = new ArrayList<>();
-//                URL url = new URL("https://serverjars.com/api/fetchAll/" + endpoint);
-//                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-//                con.setRequestMethod("GET");
-//                con.connect();
-//
-//                JSONObject responseJson = new JSONObject(new BufferedReader(new InputStreamReader(con.getInputStream())).lines().collect(Collectors.joining()));
-//
-//                con.disconnect();
-//
-//                for (Object obj : responseJson.getJSONArray("response")) {
-//                    JSONObject jsonObject = (JSONObject) obj;
-//                    l.add(jsonObject.getString("version"));
-//                }
-//                typeMap.put(endpoint.split("/")[1].replace("/", ""), l);
-//            }
-//            typeBox.getItems().addAll(typeMap.keySet());
-//        }
-//        catch (Exception e) {
-//            throw new RuntimeException(e);
-//        } TERM
-
-
-//        ramTypeBox.getItems().addAll("G", "M");
-//        ramTypeBox.setValue(localConfig.get("ram-type"));
-//        ramAmount.setText(localConfig.get("ram-amount")); Vacate to Profiles system
-
-//         TERM
+        ramTypeBox.getItems().addAll("G", "M");
         if (!globalConfig.get("eula-agreement").equalsIgnoreCase("true")) showEula();
     }
 
@@ -168,7 +81,7 @@ public class MainController {
             root = FXMLLoader.load(getClass().getResource("properties-window.fxml"));
             Stage stage = new Stage();
             stage.setTitle("Edit Server Properties");
-            stage.getIcons().add(new Image(ApplicationMain.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
+            stage.getIcons().add(new Image(Application.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
             Scene scene = new Scene(root, 604, 326);
             stage.setScene(scene);
             stage.show();
@@ -178,263 +91,40 @@ public class MainController {
         }
     }
 
-    //Called when the "Update" button is pressed after a new type and version is selected
-    //DEPRECIATED
-//    public void updateVersion(ActionEvent actionEvent) {
-//        printToConsole("INFO", "Attempting to update to " + typeBox.getValue() + " " + versionBox.getValue());
-//
-//        Runnable runnable = () -> {
-//            try {
-//                URL url = new URL("https://serverjars.com/api/fetchJar/" + endpoints[getClosestIndex(endpoints, typeBox.getValue())] + "/" + versionBox.getValue());
-//                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-//                con.setRequestMethod("GET");
-//                Platform.runLater(()->printToConsole("INFO", "Connecting to servers..."));
-//                con.connect();
-//
-//                Platform.runLater(()->printToConsole("INFO", "Downloading new jar file..."));
-//                InputStream is = con.getInputStream();
-//
-//                Platform.runLater(()->printToConsole("INFO", "Writing new jar file..."));
-//                byte[] jarFileData = is.readAllBytes();
-//
-//                //Because forge just HAS TO BE DIFFERENT (ಠ_ಠ)
-//                if (typeBox.getValue().equals("forge")) {
-//                    FileOutputStream fos = new FileOutputStream(directoryPath + File.separator + "installer.jar");
-//                    fos.write(jarFileData, 0, jarFileData.length);
-//
-//                    Platform.runLater(()->printToConsole("INFO", "Server is forge, running installer..."));
-//
-//                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", "installer.jar", "--installServer");
-//                    pb.directory(directoryPath.toFile());
-//                    Process nestedProcess = pb.start();
-//                    BufferedReader br = new BufferedReader(new InputStreamReader(nestedProcess.getInputStream()));
-//                    String line;
-//                    while (nestedProcess.isAlive()) {
-//                        if ((line = br.readLine()) != null) {
-//                            System.out.println(line);
-//                        }
-//                    }
-//
-//                    localConfig.put("is-forge", "true");
-//
-//                    FileInputStream fis = new FileInputStream(directoryPath + File.separator + "run.bat");
-//                    BufferedReader fileReader = new BufferedReader(new InputStreamReader(fis));
-//                    StringBuilder sb = new StringBuilder();
-//                    while ((line = fileReader.readLine()) != null) {
-//                        if (line.contains("java")) {
-//                            line = line.replace("%*", "nogui %*");
-//                        }
-//                        if (line.contains("pause")) line = line.replace("pause", "");
-//                        sb.append(line + "\n");
-//                    }
-//
-//                    FileOutputStream fileWriter = new FileOutputStream(directoryPath + File.separator + "run.bat");
-//                    fileWriter.write(sb.toString().getBytes(StandardCharsets.UTF_8), 0, sb.toString().getBytes().length);
-//
-//                    Platform.runLater(()->printToConsole("INFO", "Successfully installed forge server!"));
-//                    br.close();
-//                    fos.close();
-//                    fis.close();
-//                    fileReader.close();
-//                }
-//
-//                //Hey forge, notice how fabric made a mod loader that works JUST LIKE VANILLA ¯\_ಠ_ಠ_/¯
-//                else {
-//                    FileOutputStream fos = new FileOutputStream(serverJar);
-//                    fos.write(jarFileData, 0, jarFileData.length);
-//                    fos.close();
-//                    localConfig.put("is-forge", "false");
-//                }
-//
-//                is.close();
-//                con.disconnect();
-//
-//                Platform.runLater(()->printToConsole("INFO", "Version successfully updated!"));
-//            }
-//            catch (Exception e) {
-//                Platform.runLater(()->printToConsole("ERROR", "Error when updating version. Please make sure you select a type and version"));
-//                e.printStackTrace();
-//            }
-//        };
-//        executorService.execute(runnable);
-//    }
-
-    //Called when the "Change" button is pressed to change the running directory
-    //"Never change we love you the way you are" - My dad
-    //DEPRECIATED
-//    public void changeFolder(MouseEvent event) throws IOException {
-//        DirectoryChooser directoryChooser = new DirectoryChooser();
-//        directoryChooser.setTitle("Select minecraft server folder");
-//        File file = directoryChooser.showDialog(mainPane.getScene().getWindow());
-//
-//        if (file != null) {
-//            directoryPath = Path.of(file.getCanonicalPath());
-//            pathContainer.setText(directoryPath.toString());
-//            serverJar = new File(directoryPath + "/server.jar");
-//            localDataFile = new File(directoryPath + File.separator + "mconsole/mconsole.dat");
-//
-//            readOrCreateLocalConfig();
-//
-//            if (config.get("save-path").equals("true")) {
-//                config.put("path", directoryPath.toString());
-//            }
-//        }
-//    }
-
     //Called when the Start/Stop button is pressed
     public void togglePowerState(ActionEvent actionEvent) {
-        if (process == null || !process.isAlive()) {
-
-            //Vacate to Profiles system (profile.startServer)
-//            //Verify all the files to make sure no corruptions happened while the server was offline
-//            Verifier.runChecks();
-//
-//            getConsole().clearConsole();
-//
-//            //Auto agree to the eula
-//            try {
-//                File eula = new File(directoryPath + "/eula.txt");
-//                if (!eula.exists()) eula.createNewFile();
-//                BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(eula)));
-//                List<String> strs = br.lines().toList();
-//
-//                if (!strs.contains("eula=true")) {
-//                    String agree = "eula=true";
-//                    FileOutputStream fos = new FileOutputStream(eula);
-//                    fos.write(agree.getBytes(StandardCharsets.UTF_8), 0, agree.getBytes(StandardCharsets.UTF_8).length);
-//                }
-//
-//            }
-//            catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            Runnable runnable = ()-> {
-//                try {
-//                    //Create process builder and set directory
-//                    String allocatedRam = "-Xmx" + ramAmount.getText() + ramTypeBox.getValue();
-//                    System.out.println(allocatedRam);
-//
-//                    //Because Forge just HAS to be different, we have to rewrite an entire file rather than just changing one command line argument
-//                    //THANKS FORGE (ノಠ益ಠ)ノ彡┻━┻
-//                    if (localConfig.get("is-forge").equals("true")) {
-//                        Platform.runLater(()-> getConsole().log(Sender.INFO, "Building Forge run scripts"));
-//                        FileInputStream fis = new FileInputStream(directoryPath + File.separator + "user_jvm_args.txt");
-//                        BufferedReader fileReader = new BufferedReader(new InputStreamReader(fis));
-//                        StringBuilder sb = new StringBuilder();
-//                        String line;
-//                        while ((line = fileReader.readLine()) != null) {
-//                            if (line.contains("-Xmx")) {
-//                                line = allocatedRam;
-//                            }
-//                            sb.append(line);
-//                        }
-//                        FileOutputStream fileWriter = new FileOutputStream(directoryPath + File.separator + "user_jvm_args.txt");
-//                        fileWriter.write(sb.toString().getBytes(StandardCharsets.UTF_8), 0, sb.toString().getBytes().length);
-//
-//                        fis.close();
-//                        fileReader.close();
-//                    }
-//
-//                    Platform.runLater(()-> getConsole().log(Sender.INFO, "Server is starting"));
-//                    ProcessBuilder pb = localConfig.get("is-forge").equals("true") ? new ProcessBuilder("cmd", "/c", "run.bat") : new ProcessBuilder("java", "-jar", allocatedRam, "-Xms1G", "server.jar", "nogui");
-//                    pb.directory(new File(directoryPath.toString()));
-//
-//                    //Start the server
-//                    process = pb.start();
-//
-//                    //Set up readers and writers for reading from and printing to the server binary
-//                    BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//                    setOutputStreamWriter(new PrintWriter(process.getOutputStream()));
-//
-//                    //Start printing output to the console
-//                    String line;
-//                    while (process.isAlive()) {
-//                        if ((line = br.readLine()) != null) {
-//                            String finalLine = line;
-//                            Platform.runLater(() -> getConsole().log(Sender.MINECRAFT, finalLine));
-//                        }
-//                    }
-//                }
-//                catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            };
-//
-//            //Run everything in a new thread to make sure the GUI remains responsive and operable
-//            executorService.execute(runnable);
+        if (!activeProfile.running) {
+            activeProfile.startServer(Integer.parseInt(ramAmount.getText()), ramTypeBox.getValue());
         }
-        else if (process.isAlive()) {
-            //Vacate to Profiles system (profile.stopServer())
-//            outputStreamWriter.println("stop");
-//            outputStreamWriter.flush();
+        else {
+            activeProfile.stopServer();
         }
     }
 
     //For the last time, killing the server isn't a crime, it's not a living thing
     public void killServer(ActionEvent actionEvent) {
-        if (process.isAlive()) {
-            // Vacate to Profiles system (profile.terminateServerForcibly())
-//            //Not that kind of alive (－‸ლ)
-//            process.destroyForcibly();
-            getConsole().log(Sender.WARN, "Server was forcibly terminated.");
-        }
+        activeProfile.killServer();
     }
 
     public void sendCommand(ActionEvent event) {
-        // Vacate to Profiles system (profile.sendCommand(commandBox.getText)
-//        outputStreamWriter.println(commandBox.getText());
-//        outputStreamWriter.flush();
+        activeProfile.sendCommand(commandBox.getText());
         commandBox.setText("");
     }
 
     public void onKeyPress(KeyEvent keyEvent) {
         if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-            // Vacate to Profiles system (profile.sendCommand(commandBox.getText)
-//        outputStreamWriter.println(commandBox.getText());
-//        outputStreamWriter.flush();
+            activeProfile.sendCommand(commandBox.getText());
             commandBox.setText("");
         }
     }
-
-
-
-    //Utility methods, they kinda ugly so the get to get hidden down here
-
-    //This is such a bad way of doing this lmao, but I can't be bothered to think of a better way so here you go
-//    private int getClosestIndex(String[] array, String option) {
-//        int index = -1;
-//        for (String str : array) {
-//            index++;
-//            if (str.contains(option)) return index;
-//        }
-//        return 0;
-//    } TERM
-
-    //Updates the options for versions based on the selected type
-    //Depreciated
-//    public void changeVersionOptions() {
-//        versionBox.getItems().clear();
-//        //This version box isn't worth anything, it has no value... I'll show myself out
-//        versionBox.setValue(null);
-//        versionBox.getItems().addAll(typeMap.get(typeBox.getValue()));
-//    }
-
-    //These two methods are just here for thread safety purposes
-//    public void setOutputStreamWriter(PrintWriter outputStreamWriter) {
-//        this.outputStreamWriter = outputStreamWriter;
-//    } TERM
-//    public PrintWriter getOutputStreamWriter() {
-//        return outputStreamWriter;
-//    } TERM
 
     private void showEula() {
         try {
             Parent root;
             root = FXMLLoader.load(getClass().getResource("eula.fxml"));
             Stage stage = new Stage();
-            stage.setTitle("Edit Server Properties");
-            stage.getIcons().add(new Image(ApplicationMain.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
+            stage.setTitle("EULA Agreement");
+            stage.getIcons().add(new Image(Application.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
             Scene scene = new Scene(root, 584, 549);
             stage.setScene(scene);
 
@@ -452,180 +142,54 @@ public class MainController {
         }
     }
 
-    //This code is ugly, so I moved it to a utility method, so I can hide it ;)
-    //Depreciated
-//    public void readOrCreateConfig() {
-//        try {
-//            if (!dataFile.exists()) {
-//                try {
-//                    dataFile.getParentFile().mkdirs();
-//                    dataFile.createNewFile();
-//                    BufferedInputStream bis = new BufferedInputStream(getClass().getClassLoader().getResourceAsStream("default-data.dat"));
-//                    byte[] fileBytes = new byte[bis.available()];
-//
-//                    bis.read(fileBytes);
-//                    OutputStream os = new FileOutputStream(dataFile);
-//                    os.write(fileBytes, 0, fileBytes.length);
-//                    bis.close();
-//                    os.close();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(dataFile)));
-//            String line;
-//            while ((line = br.readLine()) != null) {
-//                String[] splitLine = line.split("=", 0);
-//                if (splitLine.length > 1) {
-//                    if (splitLine[1].startsWith("$")) {
-//                        String key = splitLine[1].replace("$", "");
-//                        if (staticVars.keySet().contains(key)) {
-//                            config.put(splitLine[0], staticVars.get(key));
-//                        } else {
-//                            getConsole().err("No such variable as $" + key + ". Please check the config file. Falling back to default");
-//                            config.put(splitLine[0], staticVars.get("current"));
-//                        }
-//                    } else {
-//                        config.put(splitLine[0], splitLine[1]);
-//                    }
-//                }
-//            }
-//            br.close();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public void createNewProfile(ActionEvent actionEvent) {
+        try {
+            Parent root;
+            root = FXMLLoader.load(getClass().getResource("create-profile.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("Create new server profile");
+            stage.getIcons().add(new Image(Application.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
+            Scene scene = new Scene(root, 475, 249);
+            stage.setScene(scene);
+            stage.show();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    //Depreciated
-//    public void readOrCreateLocalConfig() {
-//        try {
-//            if (!localDataFile.exists()) {
-//                try {
-//                    localDataFile.getParentFile().mkdirs();
-//                    localDataFile.createNewFile();
-//                    BufferedInputStream bis = new BufferedInputStream(getClass().getClassLoader().getResourceAsStream("default-local-data.dat"));
-//                    byte[] fileBytes = new byte[bis.available()];
-//
-//                    bis.read(fileBytes);
-//                    OutputStream os = new FileOutputStream(localDataFile);
-//                    os.write(fileBytes, 0, fileBytes.length);
-//                    bis.close();
-//                    os.close();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(localDataFile)));
-//            String line;
-//            while ((line = br.readLine()) != null) {
-//                String[] splitLine = line.split("=", 0);
-//                if (splitLine.length > 1) {
-//                    localConfig.put(splitLine[0], splitLine[1]);
-//                }
-//            }
-//            br.close();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-    //Depreciated
-//    public void saveConfigs() {
-//        StringBuilder sb = new StringBuilder();
-//        for (String string : config.keySet()) {
-//            sb.append(String.format(
-//                    "%s=%s\n",
-//                    string,
-//                    config.get(string)
-//            ));
-//        }
-//
-//        try {
-//            OutputStream os = new FileOutputStream(dataFile);
-//            os.write(sb.toString().getBytes(StandardCharsets.UTF_8), 0 , sb.toString().getBytes(StandardCharsets.UTF_8).length);
-//        } catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        if (!localDataFile.exists()) {
-//            try {
-//                localDataFile.getParentFile().mkdirs();
-//                localDataFile.createNewFile();
-//                BufferedInputStream bis = new BufferedInputStream(getClass().getClassLoader().getResourceAsStream("default-local-data.dat"));
-//                byte[] fileBytes = new byte[bis.available()];
-//
-//                bis.read(fileBytes);
-//                OutputStream os = new FileOutputStream(localDataFile);
-//                os.write(fileBytes, 0, fileBytes.length);
-//                bis.close();
-//                os.close();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        sb = new StringBuilder();
-//        //I had to add this line for a reason, if you're reading this you know who you are ¬_¬
-//        sb.append("# DO NOT MODIFY THESE VALUES IF YOU DO NOT KNOW WHAT YOU ARE DOING\n");
-//        for (String string : localConfig.keySet()) {
-//            sb.append(String.format(
-//                    "%s=%s\n",
-//                    string,
-//                    localConfig.get(string)
-//            ));
-//        }
-//
-//        try {
-//            OutputStream os = new FileOutputStream(localDataFile);
-//            os.write(sb.toString().getBytes(StandardCharsets.UTF_8), 0 , sb.toString().getBytes(StandardCharsets.UTF_8).length);
-//        } catch (FileNotFoundException e) {
-//            throw new RuntimeException(e);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    public void loadNewProfile(Profile profile) {
+        activeProfile.unload();
+        activeProfile = profile.load();
+    }
 
     //Make sure everything shuts down nice and cleanly leaving no threads running (IM LOOKING AT YOU MINECRAFT)
     public void runExitTasks() {
-        //Initiate shutdown of the minecraft server using the "stop" command to cleanly save worlds and data
-//        if (getOutputStreamWriter() != null) {
-//            getOutputStreamWriter().println("stop");
-//            getOutputStreamWriter().flush();
-//            getOutputStreamWriter().close();
-//        } Vacate to Profiles system
-
-        //Make sure Minecraft doesn't choose violence and hog up a thread for eternity (... or until you restart your pc)
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-
-        executor.execute(() -> {
-            try {
-                //Save shutdown values
-//                localConfig.put("ram-amount", ramAmount.getText());
-//                localConfig.put("ram-type", ramTypeBox.getValue()); Vacate to Profiles system
-
-                executorService.shutdown();
-                globalConfig.save();
-                if (process != null) {
-                    if (process.isAlive()) {
-                        //Sometimes minecraft can hang especially if the reason the user is closing is because of a "soft crash"
-                        //While the ideal solution would be to use the "kill" button some users may not do that so just in case
-                        //we need to add a time-out that will kill the minecraft thread after 60 seconds if it does not close nicely to prevent thread locking
-                        if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) process.destroyForcibly();
-                    }
-                }
-                Verifier.deInit();
-                Platform.runLater(Platform::exit);
-            }
-            catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        executor.shutdown();
+        activeProfile.unload();
+        globalConfig.save();
     }
 
     public Console getConsole() {
         return console;
+    }
+
+    public com.koolade446.mconsole.api.API getAPI() {
+        return API;
+    }
+
+    public GlobalConfig getGlobalConfig() {
+        return globalConfig;
+    }
+
+    public Profiles getProfiles() {
+        return profiles;
+    }
+
+    public Profile getActiveProfile() {
+        return activeProfile;
+    }
+
+    public void setActiveProfile(Profile activeProfile) {
+        this.activeProfile = activeProfile;
     }
 }

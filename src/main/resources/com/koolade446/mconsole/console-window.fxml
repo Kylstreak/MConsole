@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
@@ -11,33 +12,30 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane id="main-panel" fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="575.0" prefWidth="1030.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.controlers.MainController">
+<Pane id="main-panel" fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="1030.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.controlers.MainController">
    <children>
-      <TextArea id="standard-inset" fx:id="visualConsole" editable="false" layoutX="15.0" layoutY="44.0" prefHeight="442.0" prefWidth="1001.0" />
-      <TextField id="standard-text-field" fx:id="commandBox" layoutX="15.0" layoutY="497.0" onKeyPressed="#onKeyPress" prefHeight="27.0" prefWidth="910.0" promptText="Command">
+      <TextArea id="standard-inset" fx:id="visualConsole" editable="false" layoutX="15.0" layoutY="49.0" prefHeight="442.0" prefWidth="1001.0" />
+      <TextField id="standard-text-field" fx:id="commandBox" layoutX="15.0" layoutY="502.0" onKeyPressed="#onKeyPress" prefHeight="27.0" prefWidth="910.0" promptText="Command">
          <cursor>
             <Cursor fx:constant="TEXT" />
          </cursor></TextField>
-      <Button id="standard-button" fx:id="sendButton" layoutX="931.0" layoutY="497.0" mnemonicParsing="false" onAction="#sendCommand" prefHeight="27.0" prefWidth="85.0" text="Send">
+      <Button id="standard-button" fx:id="sendButton" layoutX="931.0" layoutY="502.0" mnemonicParsing="false" onAction="#sendCommand" prefHeight="27.0" prefWidth="85.0" text="Send">
          <cursor>
             <Cursor fx:constant="HAND" />
          </cursor>
       </Button>
-      <Button id="standard-button" fx:id="updateButton" layoutX="934.0" layoutY="8.0" mnemonicParsing="false" onAction="#updateVersion" prefHeight="27.0" prefWidth="79.0" style="-fx-border-radius: 5px; -fx-background-radius: 5px;" text="Update" textFill="WHITE">
-         <cursor>
-            <Cursor fx:constant="HAND" />
-         </cursor>
-      </Button>
-      <Button id="server-ctrl-btn" fx:id="startStopButton" layoutX="15.0" layoutY="7.0" mnemonicParsing="false" onAction="#togglePowerState" prefHeight="30.0" prefWidth="30.0" />
-      <Button id="server-ctrl-btn" fx:id="killButton" layoutX="52.0" layoutY="7.0" mnemonicParsing="false" onAction="#killServer" prefHeight="30.0" prefWidth="30.0" />
-      <ComboBox id="standard-cbox" fx:id="versionBox" layoutX="775.0" layoutY="8.0" prefWidth="150.0" promptText="Version" />
-      <ComboBox id="standard-cbox" fx:id="typeBox" layoutX="618.0" layoutY="8.0" onAction="#changeVersionOptions" prefWidth="150.0" promptText="Type" />
-      <Label id="clickable-text" fx:id="pathContainer" layoutX="170.0" layoutY="13.0" onMouseClicked="#changeFolder" prefHeight="17.0" prefWidth="389.0" text="None Selected" />
-      <Label id="standard-text" fx:id="pat" layoutX="90.0" layoutY="13.0" text="Server Folder:" />
-      <Label id="standard-text" layoutX="572.0" layoutY="14.0" text="Version:" />
-      <Button id="standard-button" fx:id="ePropButton" layoutX="14.0" layoutY="534.0" mnemonicParsing="false" onAction="#editProperties" text="Edit properties" />
-      <TextField id="standard-text-field" fx:id="ramAmount" layoutX="867.0" layoutY="534.0" prefHeight="25.0" prefWidth="85.0" />
-      <ComboBox id="standard-cbox" fx:id="ramTypeBox" layoutX="957.0" layoutY="534.0" prefHeight="27.0" prefWidth="59.0" />
-      <Label id="standard-text" layoutX="775.0" layoutY="539.0" prefHeight="17.0" prefWidth="85.0" text="Allocated RAM:" />
+      <Button id="server-ctrl-btn" fx:id="startStopButton" layoutX="265.0" layoutY="14.0" mnemonicParsing="false" onAction="#togglePowerState" prefHeight="30.0" prefWidth="30.0" />
+      <Button id="server-ctrl-btn" fx:id="killButton" layoutX="301.0" layoutY="14.0" mnemonicParsing="false" onAction="#killServer" prefHeight="30.0" prefWidth="30.0" />
+      <Button id="standard-button" fx:id="ePropButton" layoutX="920.0" layoutY="15.0" mnemonicParsing="false" onAction="#editProperties" text="Edit properties" />
+      <TextField id="standard-text-field" fx:id="ramAmount" layoutX="107.0" layoutY="15.0" prefHeight="25.0" prefWidth="85.0" />
+      <ComboBox id="standard-cbox" fx:id="ramTypeBox" layoutX="197.0" layoutY="15.0" prefHeight="27.0" prefWidth="59.0" />
+      <Label id="standard-text" layoutX="15.0" layoutY="20.0" prefHeight="17.0" prefWidth="85.0" text="Allocated RAM:" />
+      <MenuButton id="standard-menu-button" fx:id="profileSelector" layoutX="403.0" layoutY="15.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="413.0" text="Select Profile">
+         <items>
+            <MenuItem fx:id="createProfileButton" mnemonicParsing="false" onAction="#createNewProfile" text="Create new profile +" />
+         </items>
+      </MenuButton>
+      <Button id="standard-button" layoutX="827.0" layoutY="16.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="85.0" text="Edit Profile" />
+      <Label id="standard-text" layoutX="355.0" layoutY="20.0" prefHeight="17.0" prefWidth="41.0" text="Profile:" />
    </children>
 </Pane>

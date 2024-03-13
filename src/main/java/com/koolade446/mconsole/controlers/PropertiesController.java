@@ -1,6 +1,6 @@
 package com.koolade446.mconsole.controlers;
 
-import com.koolade446.mconsole.ApplicationMain;
+import com.koolade446.mconsole.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -8,6 +8,7 @@ import javafx.scene.layout.Pane;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -57,7 +58,6 @@ public class PropertiesController {
     @FXML
     TextField maxPlayers;
 
-    MainController controller = ApplicationMain.controller;
     ExecutorService executor;
     File propertiesFile;
     Map<String, Control> controlDict = new HashMap<>();
@@ -98,7 +98,7 @@ public class PropertiesController {
         difficulty.getItems().addAll(difficultyOptions);
 
         executor = Executors.newFixedThreadPool(1);
-        propertiesFile = new File(controller.directoryPath + File.separator + "server.properties");
+        propertiesFile = Paths.get(Application.rootWindow.activeProfile.location.toString(), "server.properties").toFile();
         Runnable task = ()-> {
             if (!propertiesFile.exists()) {
                 try {

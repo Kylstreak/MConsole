@@ -1,7 +1,6 @@
 package com.koolade446.mconsole;
 
 import com.koolade446.mconsole.controlers.MainController;
-import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -10,30 +9,30 @@ import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
-public class ApplicationMain extends Application {
+public class Application extends javafx.application.Application {
 
-    public static MainController controller;
+    public static MainController rootWindow;
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(ApplicationMain.class.getResource("console-window.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(Application.class.getResource("console-window.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1030, 570);
         stage.setTitle("Server control panel");
-        stage.getIcons().add(new Image(ApplicationMain.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
+        stage.getIcons().add(new Image(Application.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
-        controller = fxmlLoader.getController();
+        rootWindow = fxmlLoader.getController();
 
         stage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::onWindowClose);
     }
 
-    public static void startApplication() {
+    public static void main(String[] args) {
         launch();
     }
 
     public void onWindowClose(WindowEvent event) {
-        controller.runExitTasks();
+        rootWindow.runExitTasks();
         event.consume();
     }
 

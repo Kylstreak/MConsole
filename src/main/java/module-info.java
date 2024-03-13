@@ -12,5 +12,9 @@ module com.koolade446.mconsole {
     opens com.koolade446.mconsole to javafx.fxml;
     exports com.koolade446.mconsole;
     exports com.koolade446.mconsole.controlers;
+    exports com.koolade446.mconsole.api;
+    exports com.koolade446.mconsole.configs;
+    exports com.koolade446.mconsole.console;
+    exports com.koolade446.mconsole.profiles;
     opens com.koolade446.mconsole.controlers to javafx.fxml;
 }

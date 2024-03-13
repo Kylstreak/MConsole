@@ -1,6 +1,6 @@
 package com.koolade446.mconsole.controlers;
 
-import com.koolade446.mconsole.ApplicationMain;
+import com.koolade446.mconsole.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -43,7 +43,7 @@ public class EulaController {
 
     public void agreePressed(ActionEvent actionEvent) {
         if (readUnderstoodCheck.isSelected()) {
-            ApplicationMain.controller.config.put("eula-agreement", "true");
+            Application.rootWindow.globalConfig.put("eula-agreement", "true");
             panel.getScene().getWindow().hide();
         }
         else {
