@@ -1,5 +1,6 @@
-package com.koolade446.mconsole;
+package com.koolade446.mconsole.controlers;
 
+import com.koolade446.mconsole.ApplicationMain;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

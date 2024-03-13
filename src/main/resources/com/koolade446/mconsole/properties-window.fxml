@@ -4,7 +4,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<Pane id="main-panel" fx:id="windowPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="369.0" prefWidth="604.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.PropertiesController">
+<Pane id="main-panel" fx:id="windowPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="369.0" prefWidth="604.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.controlers.PropertiesController">
    <children>
       <CheckBox id="standard-check" fx:id="allowFlight" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="Allow Flight" />
       <CheckBox id="standard-check" fx:id="allowNether" layoutX="14.0" layoutY="32.0" mnemonicParsing="false" text="Allow Nether" />

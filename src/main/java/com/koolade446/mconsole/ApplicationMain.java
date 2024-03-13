@@ -1,5 +1,6 @@
 package com.koolade446.mconsole;
 
+import com.koolade446.mconsole.controlers.MainController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

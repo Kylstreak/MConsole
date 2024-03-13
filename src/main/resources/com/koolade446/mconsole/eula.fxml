@@ -5,7 +5,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<Pane id="main-panel" fx:id="panel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="549.0" prefWidth="584.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.EulaController">
+<Pane id="main-panel" fx:id="panel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="549.0" prefWidth="584.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.controlers.EulaController">
    <children>
       <CheckBox id="standard-check" fx:id="readUnderstoodCheck" layoutX="15.0" layoutY="497.0" mnemonicParsing="false" onAction="#checkboxToggled" text="I have read and understood the above eula." />
       <Button id="standard-button" fx:id="disagreeButton" layoutX="503.0" layoutY="515.0" mnemonicParsing="false" onAction="#disagreePressed" text="Disagree" />
