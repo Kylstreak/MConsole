@@ -30,7 +30,7 @@ public class Application extends javafx.application.Application {
 
         stage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::onWindowClose);}
 
-    public static void main(String[] args) {
+    public static void start() {
         launch();
     }
 

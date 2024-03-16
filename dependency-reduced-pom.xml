@@ -4,7 +4,7 @@
   <groupId>com.koolade446</groupId>
   <artifactId>MConsole</artifactId>
   <name>MConsole</name>
-  <version>2.0</version>
+  <version>1.0</version>
   <build>
     <plugins>
       <plugin>
@@ -21,18 +21,15 @@
         <version>0.0.8</version>
         <executions>
           <execution>
-            <id>default-cli</id>
-            <configuration>
-              <mainClass>com.koolade446.mconsole/com.koolade446.mconsole.Application</mainClass>
-              <launcher>app</launcher>
-              <jlinkZipName>app</jlinkZipName>
-              <jlinkImageName>app</jlinkImageName>
-              <noManPages>true</noManPages>
-              <stripDebug>true</stripDebug>
-              <noHeaderFiles>true</noHeaderFiles>
-            </configuration>
+            <id>javafx-package</id>
+            <phase>package</phase>
           </execution>
         </executions>
+        <configuration>
+          <mainClass>com.koolade446.mconsole.Launcher</mainClass>
+          <stripDebug>true</stripDebug>
+          <compress>2</compress>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -46,7 +43,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.koolade446.mconsole.Application</mainClass>
+                  <mainClass>com.koolade446.mconsole.Launcher</mainClass>
                 </transformer>
               </transformers>
             </configuration>
