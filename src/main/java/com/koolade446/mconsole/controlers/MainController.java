@@ -4,8 +4,10 @@ import com.koolade446.mconsole.Application;
 import com.koolade446.mconsole.api.API;
 import com.koolade446.mconsole.configs.GlobalConfig;
 import com.koolade446.mconsole.console.Console;
+import com.koolade446.mconsole.console.Sender;
 import com.koolade446.mconsole.profiles.Profile;
 import com.koolade446.mconsole.profiles.Profiles;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -17,23 +19,31 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class MainController {
 
     //FXML GUI variables
     @FXML
-    public TextArea visualConsole;
-    @FXML
     public Button startStopButton;
     @FXML
     public Button killButton;
+    @FXML
     public MenuButton profileSelector;
+    @FXML
     public MenuItem createProfileButton;
+    @FXML
+    public StackPane consolePane;
+    public ScrollPane consoleScrollPane;
     @FXML
     TextField commandBox;
     @FXML
@@ -41,37 +51,42 @@ public class MainController {
     @FXML
     Pane mainPane;
     @FXML
-    TextField ramAmount;
+    public TextField ramAmount;
     @FXML
-    ComboBox<String> ramTypeBox;
+    public ComboBox<String> ramTypeBox;
 
-    public final GlobalConfig globalConfig;
+    public GlobalConfig globalConfig;
 
-    private final Console console;
-    public final API API;
-    public final Profiles profiles;
+    private Console console;
+    public API API;
+    public Profiles profiles;
     public Profile activeProfile;
 
-
-    //Initializes our variables
-    public MainController() {
-        console = new Console(visualConsole);
+    //Initialize our GUI
+    public void initialize() {
+        consoleScrollPane.vvalueProperty().bind(consolePane.heightProperty());
+        console = new Console(consolePane);
         API = new API();
-        globalConfig = new GlobalConfig(Paths.get("mconsole", "config.dat"));
+        globalConfig = new GlobalConfig("mconsole\\config.dat");
+
         profiles = new Profiles().load();
         if (globalConfig.get("profile") != null) {
             activeProfile = profiles.get(globalConfig.get("profile"));
             activeProfile.load();
         }
-    }
+        profileSelector.getItems().addAll(profiles.values());
 
-    //Initialize our GUI
-    public void initialize() {
         startStopButton.setStyle("-fx-background-image: url('power.png')");
         killButton.setStyle("-fx-background-image: url('kill.png')");
 
         ramTypeBox.getItems().addAll("G", "M");
         if (!globalConfig.get("eula-agreement").equalsIgnoreCase("true")) showEula();
+
+    }
+
+    public void postInit(WindowEvent event) {
+        if (globalConfig.get("active-profile") != null) activeProfile = profiles.get(globalConfig.get("active-profile")).load();
+
     }
 
     //Called when the "Edit Properties" button is pressed
@@ -93,7 +108,7 @@ public class MainController {
 
     //Called when the Start/Stop button is pressed
     public void togglePowerState(ActionEvent actionEvent) {
-        if (!activeProfile.running) {
+        if (!activeProfile.isRunning()) {
             activeProfile.startServer(Integer.parseInt(ramAmount.getText()), ramTypeBox.getValue());
         }
         else {
@@ -159,14 +174,20 @@ public class MainController {
     }
 
     public void loadNewProfile(Profile profile) {
-        activeProfile.unload();
+        if (activeProfile != null) activeProfile.unload();
         activeProfile = profile.load();
     }
 
     //Make sure everything shuts down nice and cleanly leaving no threads running (IM LOOKING AT YOU MINECRAFT)
     public void runExitTasks() {
-        activeProfile.unload();
+        if(activeProfile != null) {
+            globalConfig.put("active-profile", activeProfile.name);
+            activeProfile.unload();
+        }
         globalConfig.save();
+        profiles.save();
+        API.shutdown();
+        Platform.exit();
     }
 
     public Console getConsole() {

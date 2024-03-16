@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import javafx.scene.*?>
@@ -12,9 +13,8 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane id="main-panel" fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="1030.0" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.controlers.MainController">
+<Pane id="main-panel" fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="1030.0" stylesheets="@controlers/main.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.koolade446.mconsole.controlers.MainController">
    <children>
-      <TextArea id="standard-inset" fx:id="visualConsole" editable="false" layoutX="15.0" layoutY="49.0" prefHeight="442.0" prefWidth="1001.0" />
       <TextField id="standard-text-field" fx:id="commandBox" layoutX="15.0" layoutY="502.0" onKeyPressed="#onKeyPress" prefHeight="27.0" prefWidth="910.0" promptText="Command">
          <cursor>
             <Cursor fx:constant="TEXT" />
@@ -30,12 +30,17 @@
       <TextField id="standard-text-field" fx:id="ramAmount" layoutX="107.0" layoutY="15.0" prefHeight="25.0" prefWidth="85.0" />
       <ComboBox id="standard-cbox" fx:id="ramTypeBox" layoutX="197.0" layoutY="15.0" prefHeight="27.0" prefWidth="59.0" />
       <Label id="standard-text" layoutX="15.0" layoutY="20.0" prefHeight="17.0" prefWidth="85.0" text="Allocated RAM:" />
-      <MenuButton id="standard-menu-button" fx:id="profileSelector" layoutX="403.0" layoutY="15.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="413.0" text="Select Profile">
+      <MenuButton id="standard-menu-button" fx:id="profileSelector" layoutX="403.0" layoutY="15.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="413.0" text="Select Profile" textFill="#e3e2e1">
          <items>
             <MenuItem fx:id="createProfileButton" mnemonicParsing="false" onAction="#createNewProfile" text="Create new profile +" />
          </items>
       </MenuButton>
       <Button id="standard-button" layoutX="827.0" layoutY="16.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="85.0" text="Edit Profile" />
       <Label id="standard-text" layoutX="355.0" layoutY="20.0" prefHeight="17.0" prefWidth="41.0" text="Profile:" />
+      <ScrollPane id="standard-inset" fx:id="consoleScrollPane" layoutX="15.0" layoutY="54.0" prefHeight="442.0" prefWidth="1000.0">
+         <content>
+            <StackPane id="console" fx:id="consolePane" prefHeight="438.0" prefWidth="996.0" />
+         </content>
+      </ScrollPane>
    </children>
 </Pane>

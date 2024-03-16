@@ -21,32 +21,37 @@ import java.util.stream.Collectors;
 
 public class API {
     private final Map<SoftwareType, List<String>> versions;
+    private final ExecutorService apiThread;
 
-    public API(){
-        try {
-            Map<SoftwareType, List<String>> options = new HashMap<>();
-            for (SoftwareType st : SoftwareType.values()) {
-                URL url = new URL("https://serverjars.com/api/fetchAll/" + st.getEndpoint());
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                con.setRequestMethod("GET");
-                con.connect();
+    public API() {
+        apiThread = Executors.newSingleThreadExecutor();
+        Map<SoftwareType, List<String>> options = new HashMap<>();
+        Runnable downloadTask = () -> {
+            try {
+                for (SoftwareType st : SoftwareType.values()) {
+                    URL url = new URL("https://serverjars.com/api/fetchAll/" + st.getEndpoint());
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("GET");
+                    con.connect();
 
-                JSONObject response = new JSONObject(new BufferedReader(new InputStreamReader(con.getInputStream())).lines().collect(Collectors.joining()));
+                    JSONObject response = new JSONObject(new BufferedReader(new InputStreamReader(con.getInputStream())).lines().collect(Collectors.joining()));
 
-                con.disconnect();
+                    con.disconnect();
 
-                List<String> versions = new ArrayList<>();
-                for (Object obj : response.getJSONArray("response")) {
-                    JSONObject jsonObj = (JSONObject) obj;
-                    versions.add(jsonObj.getString("version"));
+                    List<String> versions = new ArrayList<>();
+                    for (Object obj : response.getJSONArray("response")) {
+                        JSONObject jsonObj = (JSONObject) obj;
+                        versions.add(jsonObj.getString("version"));
+                    }
+
+                    options.put(st, versions);
                 }
-
-                options.put(st, versions);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            this.versions = options;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        };
+        apiThread.execute(downloadTask);
+        this.versions = options;
     }
 
     public List<String> getVersions(SoftwareType type) {
@@ -54,7 +59,6 @@ public class API {
     }
 
     public void downloadAndInstallSoftware(Path path, SoftwareType type, String version) {
-        ExecutorService executor = Executors.newFixedThreadPool(1);
         Runnable downloadServerProc = () -> {
             try {
                 URL url = new URL("https://serverjars.com/api/fetchJar/" + type.getEndpoint() + "/" + version);
@@ -83,7 +87,8 @@ public class API {
                     String line;
                     while (forgeInstallerProc.isAlive()) {
                         if ((line = br.readLine()) != null) {
-                            Application.rootWindow.getConsole().log(Sender.DOWNLOAD, line);
+                            String finalLine = line;
+                            Platform.runLater(() -> Application.rootWindow.getConsole().log(Sender.DOWNLOAD, finalLine));
                         }
                     }
                     br.close();
@@ -115,7 +120,10 @@ public class API {
                 throw new RuntimeException(e);
             }
         };
-        executor.execute(downloadServerProc);
-        executor.shutdown();
+        apiThread.execute(downloadServerProc);
+    }
+
+    public void shutdown() {
+        apiThread.shutdown();
     }
 }

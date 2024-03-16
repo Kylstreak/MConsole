@@ -21,11 +21,14 @@ public class Application extends javafx.application.Application {
         stage.getIcons().add(new Image(Application.class.getClassLoader().getResourceAsStream("app-icon.jpg")));
         stage.setScene(scene);
         stage.setResizable(false);
-        stage.show();
+
         rootWindow = fxmlLoader.getController();
 
-        stage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::onWindowClose);
-    }
+        stage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_SHOWN, rootWindow::postInit);
+
+        stage.show();
+
+        stage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, this::onWindowClose);}
 
     public static void main(String[] args) {
         launch();
@@ -35,5 +38,4 @@ public class Application extends javafx.application.Application {
         rootWindow.runExitTasks();
         event.consume();
     }
-
 }

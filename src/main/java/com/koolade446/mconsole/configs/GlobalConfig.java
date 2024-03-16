@@ -8,8 +8,8 @@ import java.util.HashMap;
 public class GlobalConfig extends HashMap<String, String> {
     private final File file;
 
-    public GlobalConfig(Path path) {
-        path = Path.of(System.getProperty("user.dir"), path.toString());
+    public GlobalConfig(String location) {
+        Path path = Path.of(System.getProperty("user.dir"), location);
         this.file = path.toFile();
 
         if (file.exists()) {read();}
@@ -34,17 +34,16 @@ public class GlobalConfig extends HashMap<String, String> {
 
     private void create() {
         try {
+            file.getParentFile().mkdirs();
             file.createNewFile();
-            BufferedInputStream inStream = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("default-local-data.dat"));
-            byte[] fileBytes = new byte[inStream.available()];
-
-            inStream.read(fileBytes);
+            BufferedInputStream inStream = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("default-data.dat"));
+            byte[] fileBytes = inStream.readAllBytes();
+            inStream.close();
 
             OutputStream os = new FileOutputStream(file);
             os.write(fileBytes, 0, fileBytes.length);
             os.flush();
             os.close();
-            inStream.close();
 
             read();
         }

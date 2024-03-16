@@ -41,14 +41,18 @@ public class ProfileController {
     }
 
     public void updateVersions(ActionEvent actionEvent) {
+        softwareVersionSelector.getItems().clear();
+        softwareVersionSelector.setValue(null);
         softwareVersionSelector.getItems().addAll(Application.rootWindow.getAPI().getVersions(SoftwareType.valueOf((String) softwareTypeSelector.getValue())));
     }
 
     public void create(ActionEvent actionEvent) {
-        Profile profile = new Profile(nameBox.getText(), directory.toString(), SoftwareType.valueOf((String) softwareTypeSelector.getValue()), (String) softwareVersionSelector.getValue());
-        profile.create();
+        Profile profile = new Profile().create(nameBox.getText(), directory.toString(), SoftwareType.valueOf((String) softwareTypeSelector.getValue()), (String) softwareVersionSelector.getValue());
         Application.rootWindow.loadNewProfile(profile);
         Application.rootWindow.getProfiles().put(profile.name, profile);
+        Application.rootWindow.profileSelector.getItems().add(profile);
+        Application.rootWindow.profileSelector.setText(profile.name);
+        panel.getScene().getWindow().hide();
     }
 
     public void cancel(ActionEvent actionEvent) {
@@ -58,7 +62,7 @@ public class ProfileController {
     public void chooseFile(ActionEvent actionEvent) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Choose new directory");
-        directory = directoryChooser.showDialog(Application.rootWindow.mainPane.getScene().getWindow()).toPath();
+        directory = directoryChooser.showDialog(panel.getScene().getWindow()).toPath();
         locationBox.setText(directory.toString());
     }
 

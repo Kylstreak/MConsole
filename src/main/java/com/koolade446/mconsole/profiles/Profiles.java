@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Profiles extends HashMap<String, Profile> implements Serializable {
-    private final Path saveLocation = Paths.get(System.getProperty("user.dir"), "profiles.bin");
+
+    @Serial
+    private static final long serialVersionUID = 2791761112076089046L;
+    private final transient Path saveLocation = Paths.get(System.getProperty("user.dir"), "mconsole", "profiles.bin");
 
     public void save() {
         try {

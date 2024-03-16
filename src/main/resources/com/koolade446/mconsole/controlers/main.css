@@ -9,10 +9,15 @@
 }
 
 #standard-inset {
-    -fx-control-inner-background: #242423;
     -fx-text-fill: #e3e2e1;
     -fx-border-color: #636363;
     -fx-background-color: #2d2e2e;
+}
+
+#console {
+    -fx-text-fill: #e3e2e1;
+    -fx-background-color:  #272727;
+    -fx-padding: 5, 0, 0, 5;
 }
 
 #clickable-text {
@@ -101,7 +106,6 @@
 }
 
 #standard-menu-button {
-    -fx-text-fill: #e3e2e1;
     -fx-background-color: #2d2e2e;
     -fx-border-color: #636363;
     -fx-border-radius: 5px;
@@ -110,13 +114,20 @@
 }
 
 #standard-menu-button .menu-item {
-    -fx-text-fill: #e3e2e1;
     -fx-background-color: #2d2e2e;
+}
+
+#standard-menu-button .menu-item .label {
+    -fx-text-fill: #e3e2e1;
 }
 
 #standard-menu-button .menu-item:hover {
     -fx-background-color: rgb(0, 108, 128);
     -fx-cursor: hand;
+}
+
+#standard-menu-button .menu {
+    -fx-background-color: #2d2e2e;
 }
 
 #server-ctrl-btn {

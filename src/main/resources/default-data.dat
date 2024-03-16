@@ -1,4 +1,2 @@
-path=$current
-save-path=true
+#Do not edit these values if you do not know what you are doing
 eula-agreement=false
-eula-auto-agree=true

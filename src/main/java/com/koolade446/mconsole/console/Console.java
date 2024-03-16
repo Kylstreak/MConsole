@@ -1,21 +1,25 @@
 package com.koolade446.mconsole.console;
 
 import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 
 public class Console {
-
-    private final TextArea visualConsole;
     private final TextFlow flow;
-    public Console(TextArea visualConsole) {
-        this.visualConsole = visualConsole;
-        this.flow = new TextFlow();
+    private final StackPane pane;
 
-        visualConsole.setEditable(false);
+    public Console(StackPane pane) {
+        this.flow = new TextFlow();
+        this.pane = pane;
+        pane.setVisible(true);
+        flow.setVisible(true);
+
+        pane.getChildren().add(flow);
     }
 
     public void log(Sender sender, String message) {
+        if (flow.getChildren().size() > 100) flow.getChildren().remove(0, 50);
         Text text = new Text(String.format("[%s] %s\n", sender.toString(), message));
         text.setFill(sender.getColor());
         flow.getChildren().add(text);
@@ -27,6 +31,6 @@ public class Console {
     }
 
     public void clearConsole() {
-        visualConsole.clear();
+        flow.getChildren().clear();
     }
 }

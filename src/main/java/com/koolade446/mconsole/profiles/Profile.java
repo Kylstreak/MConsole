@@ -5,9 +5,11 @@ import com.koolade446.mconsole.api.SoftwareType;
 import com.koolade446.mconsole.configs.LocalConfig;
 import com.koolade446.mconsole.console.Sender;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.scene.control.MenuItem;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -18,55 +20,74 @@ import java.util.concurrent.TimeUnit;
 
 public class Profile extends MenuItem implements Serializable {
 
-    public final String name;
-    public final Path location;
+    @Serial
+    private static final long serialVersionUID = 6814877710283817953L;
+    public String name;
+    public Path location;
     public Path executable;
     public SoftwareType type;
     public String version;
-    public ExecutorService executor;
-    public Process serverProcess;
-    public PrintWriter outStream;
-    public InputStreamReader inStream;
-    public LocalConfig config;
-    public boolean running;
+    public transient ExecutorService executor;
+    public transient Process serverProcess;
+    public transient PrintWriter outStream;
+    public transient BufferedReader inStream;
+    public transient LocalConfig config;
 
-    public Profile(String name, String location, SoftwareType type, String version) {
+    public Profile create(String name, String location, SoftwareType type, String version) {
         this.name = name;
-        this.location = Path.of(location);
         this.type = type;
         this.version = version;
+        this.location = Path.of(location);
         this.config = new LocalConfig(Paths.get(this.location.toString(), "mconsole-data.dat").toString());
-        this.running = false;
         Application.rootWindow.profiles.put(this.name, this);
+
+        this.setOnAction(this::changeToProfile);
+        this.setText(name);
+
+
+        updateSoftware(type, version);
+
+        try {
+            File eula = Paths.get(location.toString(), "eula.txt").toFile();
+            if (!eula.exists()) {
+                eula.createNewFile();
+                FileOutputStream fileOutputStream = new FileOutputStream(eula);
+                byte[] agreement = "eula=true".getBytes(StandardCharsets.UTF_8);
+                fileOutputStream.write(agreement, 0, agreement.length);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return this;
     }
 
     public Profile load() {
         this.executor = Executors.newFixedThreadPool(1);
+        Application.rootWindow.ramAmount.setText(config.get("ram-amount"));
+        Application.rootWindow.ramTypeBox.setValue(config.get("ram-type"));
+        Application.rootWindow.profileSelector.setText(name);
+        Application.rootWindow.getConsole().clearConsole();
         return this;
 
     }
 
-    public boolean unload() {
+    public void unload() {
         try {
             this.executor.shutdown();
-            if (running) {
+            if (isRunning()) {
                 stopServer();
                 if (!executor.awaitTermination(60, TimeUnit.SECONDS)) serverProcess.destroyForcibly();
             }
             if (inStream != null) inStream.close();
             if (outStream != null) outStream.close();
+
+            config.put("ram-amount", Application.rootWindow.ramAmount.getText());
+            config.put("ram-type", Application.rootWindow.ramTypeBox.getValue());
             config.save();
-            return true;
         }
         catch (IOException | InterruptedException e) {
-            return false;
+            e.printStackTrace();
         }
-    }
-
-    public Profile create() {
-        updateSoftware(type, version);
-        //TODO: agree to eula
-        return this;
     }
 
     public void updateSoftware(SoftwareType type, String version) {
@@ -74,12 +95,10 @@ public class Profile extends MenuItem implements Serializable {
         this.type = type;
         this.version = version;
         Application.rootWindow.API.downloadAndInstallSoftware(this.location, type, version);
-        this.executable = Objects.equals(config.get("type"), "forge") ? Paths.get(this.location.toString(), "run.bat") : Paths.get(this.location.toString(), "server.jar");
+        this.executable = type == SoftwareType.FORGE ? Paths.get(this.location.toString(), "run.bat") : Paths.get(this.location.toString(), "server.jar");
     }
 
     public void startServer(int ramAmount, String ramType) {
-        Application.rootWindow.getConsole().clearConsole();
-
         Runnable serverProc = ()-> {
             //Future proofing
             List<String> args = new ArrayList<>();
@@ -95,7 +114,7 @@ public class Profile extends MenuItem implements Serializable {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         if (line.contains("-Xmx")) line = args.get(0);
-                        sb.append(line);
+                        sb.append(line).append("\n");
                     }
                     reader.close();
                     byte[] updatedFileBytes = sb.toString().getBytes();
@@ -111,15 +130,24 @@ public class Profile extends MenuItem implements Serializable {
                 builder.directory(this.location.toFile());
 
                 serverProcess = builder.start();
+
                 this.outStream = new PrintWriter(new OutputStreamWriter(serverProcess.getOutputStream()));
-                this.inStream = new InputStreamReader(serverProcess.getInputStream());
+                this.inStream = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
+
+                String line;
+                while (serverProcess.isAlive()) {
+                    if ((line = inStream.readLine()) != null) {
+                        String finalLine = line;
+                        Platform.runLater(()-> Application.rootWindow.getConsole().log(Sender.MINECRAFT, finalLine));
+                    }
+                }
+
             }
             catch (IOException e) {
                 throw new RuntimeException(e);
             }
         };
         this.executor.execute(serverProc);
-        this.running = true;
     }
 
     public void stopServer() {
@@ -143,6 +171,74 @@ public class Profile extends MenuItem implements Serializable {
     }
 
     public void sendCommand(String command) {
-        this.outStream.println(command);
+        if (isRunning()) {
+            this.outStream.println(command);
+        }
+        else {
+            Application.rootWindow.getConsole().err("No server is running");
+        }
+    }
+
+    public void changeToProfile(ActionEvent event) {
+        Application.rootWindow.loadNewProfile(this);
+    }
+
+    @Override
+    public String toString() {
+        String string = """
+                name: %s
+                location: %s
+                executable: %S
+                type: %s
+                version: %s
+                executor: %s
+                serverProcess: %s
+                outStream: %s
+                inStream: %s
+                config: %s
+                running: %s
+                """.formatted(
+                        name,
+                        location,
+                        executable,
+                        type,
+                        version,
+                        executor,
+                        serverProcess,
+                        outStream,
+                        inStream,
+                        config,
+                        isRunning()
+                    );
+        return string;
+    }
+
+    @Serial
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeUTF(name);
+        out.writeUTF(location.toString());
+        out.writeUTF(executable.toString());
+        out.writeUTF(type.toString());
+        out.writeUTF(version);
+
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        this.name = in.readUTF();
+        this.location = Paths.get(in.readUTF());
+        this.executable = Paths.get(in.readUTF());
+        this.type = SoftwareType.valueOf(in.readUTF());
+        this.version = in.readUTF();
+
+        this.config = new LocalConfig(Paths.get(this.location.toString(), "mconsole-data.dat").toString());
+        this.executable = type == SoftwareType.FORGE ? Paths.get(location.toString(), "run.bat") : Paths.get(location.toString(), "server.jar");
+
+        this.setOnAction(this::changeToProfile);
+        this.setText(name);
+    }
+
+    public boolean isRunning() {
+        return this.serverProcess != null && this.serverProcess.isAlive();
     }
 }

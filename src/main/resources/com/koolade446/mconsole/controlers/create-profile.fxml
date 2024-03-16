@@ -13,7 +13,7 @@
       <ComboBox id="standard-cbox" fx:id="softwareVersionSelector" layoutX="327.0" layoutY="107.0" prefHeight="25.0" prefWidth="104.0" />
       <Button id="standard-button" fx:id="createButton" layoutX="398.0" layoutY="210.0" mnemonicParsing="false" onAction="#create" prefHeight="25.0" prefWidth="69.0" text="Create" />
       <Button id="standard-button" fx:id="cancelButton" layoutX="322.0" layoutY="210.0" mnemonicParsing="false" onAction="#cancel" prefHeight="25.0" prefWidth="69.0" text="Cancel" />
-      <Button id="standard-button" fx:id="openFileButton" layoutX="322.0" layoutY="42.0" mnemonicParsing="false" onAction="#chooseFile" prefHeight="25.0" prefWidth="25.0" />
+      <Button id="standard-button" fx:id="openFileButton" layoutX="322.0" layoutY="41.0" mnemonicParsing="false" onAction="#chooseFile" prefHeight="30.0" prefWidth="30.0" />
       <Label id="standard-text" layoutX="14.0" layoutY="15.0" text="Profile name:" />
       <Label id="standard-text" layoutX="14.0" layoutY="47.0" text="Location:" />
       <Label id="standard-text" layoutX="14.0" layoutY="83.0" text="Software:" />

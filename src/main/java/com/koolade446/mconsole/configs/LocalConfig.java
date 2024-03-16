@@ -8,9 +8,9 @@ import java.util.HashMap;
 public class LocalConfig extends HashMap<String, String> {
     private final File file;
 
-    public LocalConfig(String path) {
-        Path path1 = Path.of("path");
-        this.file = path1.toFile();
+    public LocalConfig(String location) {
+        Path path = Path.of(location);
+        this.file = path.toFile();
 
         if (file.exists()) {read();}
         else {create();}
@@ -27,6 +27,10 @@ public class LocalConfig extends HashMap<String, String> {
             }
             reader.close();
         }
+        catch (ArrayIndexOutOfBoundsException e) {
+            file.delete();
+            create();
+        }
         catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -34,17 +38,16 @@ public class LocalConfig extends HashMap<String, String> {
 
     private void create() {
         try {
+            file.getParentFile().mkdirs();
             file.createNewFile();
             BufferedInputStream inStream = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("default-local-data.dat"));
-            byte[] fileBytes = new byte[inStream.available()];
-
-            inStream.read(fileBytes);
+            byte[] fileBytes = inStream.readAllBytes();
+            inStream.close();
 
             OutputStream os = new FileOutputStream(file);
             os.write(fileBytes, 0, fileBytes.length);
             os.flush();
             os.close();
-            inStream.close();
 
             read();
         }
