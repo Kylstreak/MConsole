@@ -1,10 +1,9 @@
 package com.koolade446.mconsole.controlers;
 
 import com.koolade446.mconsole.Application;
-import com.koolade446.mconsole.api.API;
+import com.koolade446.mconsole.api.APIAsync;
 import com.koolade446.mconsole.configs.GlobalConfig;
 import com.koolade446.mconsole.console.Console;
-import com.koolade446.mconsole.console.Sender;
 import com.koolade446.mconsole.profiles.Profile;
 import com.koolade446.mconsole.profiles.Profiles;
 import javafx.application.Platform;
@@ -25,10 +24,6 @@ import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 
 import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Timer;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class MainController {
 
@@ -58,7 +53,6 @@ public class MainController {
     public GlobalConfig globalConfig;
 
     private Console console;
-    public API API;
     public Profiles profiles;
     public Profile activeProfile;
 
@@ -66,7 +60,6 @@ public class MainController {
     public void initialize() {
         consoleScrollPane.vvalueProperty().bind(consolePane.heightProperty());
         console = new Console(consolePane);
-        API = new API();
         globalConfig = new GlobalConfig("mconsole\\config.dat");
 
         profiles = new Profiles().load();
@@ -80,6 +73,7 @@ public class MainController {
         killButton.setStyle("-fx-background-image: url('kill.png')");
 
         ramTypeBox.getItems().addAll("G", "M");
+        APIAsync.collectEndpoints();
         if (!globalConfig.get("eula-agreement").equalsIgnoreCase("true")) showEula();
 
     }
@@ -186,16 +180,12 @@ public class MainController {
         }
         globalConfig.save();
         profiles.save();
-        API.shutdown();
+        APIAsync.shutdown();
         Platform.exit();
     }
 
     public Console getConsole() {
         return console;
-    }
-
-    public com.koolade446.mconsole.api.API getAPI() {
-        return API;
     }
 
     public GlobalConfig getGlobalConfig() {

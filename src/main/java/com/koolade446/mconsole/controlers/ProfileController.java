@@ -1,8 +1,11 @@
 package com.koolade446.mconsole.controlers;
 
 import com.koolade446.mconsole.Application;
-import com.koolade446.mconsole.api.SoftwareType;
+import com.koolade446.mconsole.api.APIAsync;
+import com.koolade446.mconsole.api.Endpoint;
+import com.koolade446.mconsole.api.centrojar.FetchTypesRequest;
 import com.koolade446.mconsole.profiles.Profile;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -34,8 +37,8 @@ public class ProfileController {
 
     public void initialize() {
         openFileButton.setStyle("-fx-background-image: url('folder.png')");
-        for (SoftwareType type : SoftwareType.values()) {
-            softwareTypeSelector.getItems().add(type.toString());
+        for (Endpoint endpoint : APIAsync.ENDPOINTS) {
+            softwareTypeSelector.getItems().add(endpoint.type());
         }
         locationBox.setEditable(false);
     }
@@ -43,11 +46,19 @@ public class ProfileController {
     public void updateVersions(ActionEvent actionEvent) {
         softwareVersionSelector.getItems().clear();
         softwareVersionSelector.setValue(null);
-        softwareVersionSelector.getItems().addAll(Application.rootWindow.getAPI().getVersions(SoftwareType.valueOf((String) softwareTypeSelector.getValue())));
+
+        Endpoint endpoint = APIAsync.ENDPOINTS.getByType(softwareTypeSelector.getValue().toString());
+        FetchTypesRequest request = new FetchTypesRequest(endpoint.category(), endpoint.type());
+        request.send().thenAccept(jarInfo -> Platform.runLater(() -> {
+            jarInfo.getTypes().forEach(type -> softwareVersionSelector.getItems().add(type.version));
+        })).exceptionally(throwable -> {
+            throwable.printStackTrace();
+            return null;
+        });
     }
 
     public void create(ActionEvent actionEvent) {
-        Profile profile = new Profile().create(nameBox.getText(), directory.toString(), SoftwareType.valueOf((String) softwareTypeSelector.getValue()), (String) softwareVersionSelector.getValue());
+        Profile profile = new Profile().create(nameBox.getText(), directory.toString(), softwareTypeSelector.getValue().toString(), (String) softwareVersionSelector.getValue());
         Application.rootWindow.loadNewProfile(profile);
         Application.rootWindow.getProfiles().put(profile.name, profile);
         Application.rootWindow.profileSelector.getItems().add(profile);

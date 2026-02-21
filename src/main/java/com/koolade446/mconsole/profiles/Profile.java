@@ -1,7 +1,8 @@
 package com.koolade446.mconsole.profiles;
 
 import com.koolade446.mconsole.Application;
-import com.koolade446.mconsole.api.SoftwareType;
+import com.koolade446.mconsole.api.APIAsync;
+import com.koolade446.mconsole.api.centrojar.FetchJarRequest;
 import com.koolade446.mconsole.configs.LocalConfig;
 import com.koolade446.mconsole.console.Sender;
 import javafx.application.Platform;
@@ -25,7 +26,7 @@ public class Profile extends MenuItem implements Serializable {
     public String name;
     public Path location;
     public Path executable;
-    public SoftwareType type;
+    public String type;
     public String version;
     public transient ExecutorService executor;
     public transient Process serverProcess;
@@ -33,7 +34,7 @@ public class Profile extends MenuItem implements Serializable {
     public transient BufferedReader inStream;
     public transient LocalConfig config;
 
-    public Profile create(String name, String location, SoftwareType type, String version) {
+    public Profile create(String name, String location, String type, String version) {
         this.name = name;
         this.type = type;
         this.version = version;
@@ -90,12 +91,13 @@ public class Profile extends MenuItem implements Serializable {
         }
     }
 
-    public void updateSoftware(SoftwareType type, String version) {
-        config.put("type", type.toString());
+    public void updateSoftware(String type, String version) {
+        config.put("type", type);
         this.type = type;
         this.version = version;
-        Application.rootWindow.API.downloadAndInstallSoftware(this.location, type, version);
-        this.executable = type == SoftwareType.FORGE ? Paths.get(this.location.toString(), "run.bat") : Paths.get(this.location.toString(), "server.jar");
+        FetchJarRequest request = new FetchJarRequest(APIAsync.ENDPOINTS.getByType(type), version);
+        request.send().thenAccept(resp -> resp.writeToFile(this.location.toString() + "/server.jar"));
+        this.executable = type.equals("forge") ? Paths.get(this.location.toString(), "run.bat") : Paths.get(this.location.toString(), "server.jar");
     }
 
     public void startServer(int ramAmount, String ramType) {
@@ -106,7 +108,7 @@ public class Profile extends MenuItem implements Serializable {
             args.add("-Xms1G");
 
             try {
-                if (this.type.equals(SoftwareType.FORGE)) {
+                if (this.type.equals("forge")) {
                     Platform.runLater(() -> Application.rootWindow.getConsole().log(Sender.INFO, "Updating forge run scripts"));
                     Path jvmArgs = Paths.get(this.location.toString(), "user_jvm_args.txt");
                     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(jvmArgs.toFile())));
@@ -126,7 +128,7 @@ public class Profile extends MenuItem implements Serializable {
                     Platform.runLater(()-> Application.rootWindow.getConsole().log(Sender.INFO, "Forge run scripts updated"));
                 }
                 Platform.runLater(()-> Application.rootWindow.getConsole().log(Sender.MINECRAFT, "Starting server"));
-                ProcessBuilder builder = this.type.equals(SoftwareType.FORGE) ? new ProcessBuilder("cmd", "/c", executable.toString()) : new ProcessBuilder("java", "-jar", args.get(0), args.get(1), executable.toString(), "nogui");
+                ProcessBuilder builder = this.type.equals("forge") ? new ProcessBuilder("cmd", "/c", executable.toString()) : new ProcessBuilder("java", "-jar", args.get(0), args.get(1), executable.toString(), "nogui");
                 builder.directory(this.location.toFile());
 
                 serverProcess = builder.start();
@@ -228,11 +230,11 @@ public class Profile extends MenuItem implements Serializable {
         this.name = in.readUTF();
         this.location = Paths.get(in.readUTF());
         this.executable = Paths.get(in.readUTF());
-        this.type = SoftwareType.valueOf(in.readUTF());
+        this.type = in.readUTF();
         this.version = in.readUTF();
 
         this.config = new LocalConfig(Paths.get(this.location.toString(), "mconsole-data.dat").toString());
-        this.executable = type == SoftwareType.FORGE ? Paths.get(location.toString(), "run.bat") : Paths.get(location.toString(), "server.jar");
+        this.executable = type.equals("forge") ? Paths.get(location.toString(), "run.bat") : Paths.get(location.toString(), "server.jar");
 
         this.setOnAction(this::changeToProfile);
         this.setText(name);
