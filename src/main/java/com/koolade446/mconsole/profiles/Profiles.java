@@ -3,7 +3,6 @@ package com.koolade446.mconsole.profiles;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Profiles extends HashMap<String, Profile> implements Serializable {
@@ -13,6 +12,7 @@ public class Profiles extends HashMap<String, Profile> implements Serializable {
     private final transient Path saveLocation = Paths.get(System.getProperty("user.dir"), "mconsole", "profiles.bin");
 
     public void save() {
+        for (Profile profile : values()) profile.unload();
         try {
             ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(saveLocation.toFile()));
             outputStream.writeObject(this);

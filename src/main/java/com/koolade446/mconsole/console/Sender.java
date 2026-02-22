@@ -2,7 +2,6 @@ package com.koolade446.mconsole.console;
 
 
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 
 public enum Sender {
     MINECRAFT(Color.GREEN),

@@ -1,10 +1,13 @@
 package com.koolade446.mconsole.configs;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class LocalConfig extends HashMap<String, String> {
     private final File file;
 
@@ -40,14 +43,12 @@ public class LocalConfig extends HashMap<String, String> {
         try {
             file.getParentFile().mkdirs();
             file.createNewFile();
-            BufferedInputStream inStream = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("default-local-data.dat"));
+
+            BufferedInputStream inStream = new BufferedInputStream(Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream("default-local-data.dat")));
             byte[] fileBytes = inStream.readAllBytes();
             inStream.close();
 
-            OutputStream os = new FileOutputStream(file);
-            os.write(fileBytes, 0, fileBytes.length);
-            os.flush();
-            os.close();
+            Files.write(file.toPath(), fileBytes);
 
             read();
         }
@@ -59,6 +60,7 @@ public class LocalConfig extends HashMap<String, String> {
     public void save() {
         try {
             ArrayList<String> lines = new ArrayList<>();
+            if (!file.exists()) create();
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             String line;
             while ((line = br.readLine()) != null) {

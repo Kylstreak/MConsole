@@ -5,7 +5,7 @@ import com.koolade446.mconsole.api.APIAsync;
 import com.koolade446.mconsole.api.centrojar.FetchJarRequest;
 import com.koolade446.mconsole.configs.LocalConfig;
 import com.koolade446.mconsole.console.Sender;
-import javafx.application.Platform;
+import com.koolade446.mconsole.worker.ServerWorker;
 import javafx.event.ActionEvent;
 import javafx.scene.control.MenuItem;
 
@@ -14,11 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class Profile extends MenuItem implements Serializable {
 
     @Serial
@@ -28,10 +26,6 @@ public class Profile extends MenuItem implements Serializable {
     public Path executable;
     public String type;
     public String version;
-    public transient ExecutorService executor;
-    public transient Process serverProcess;
-    public transient PrintWriter outStream;
-    public transient BufferedReader inStream;
     public transient LocalConfig config;
 
     public Profile create(String name, String location, String type, String version) {
@@ -47,12 +41,12 @@ public class Profile extends MenuItem implements Serializable {
 
 
         updateSoftware(type, version);
+        File eula = Paths.get(location, "eula.txt").toFile();
 
-        try {
-            File eula = Paths.get(location.toString(), "eula.txt").toFile();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(eula)) {
             if (!eula.exists()) {
                 eula.createNewFile();
-                FileOutputStream fileOutputStream = new FileOutputStream(eula);
+
                 byte[] agreement = "eula=true".getBytes(StandardCharsets.UTF_8);
                 fileOutputStream.write(agreement, 0, agreement.length);
             }
@@ -63,122 +57,51 @@ public class Profile extends MenuItem implements Serializable {
     }
 
     public Profile load() {
-        this.executor = Executors.newFixedThreadPool(1);
-        Application.rootWindow.ramAmount.setText(config.get("ram-amount"));
-        Application.rootWindow.ramTypeBox.setValue(config.get("ram-type"));
+
+        // Fallback to default values if a save error happens
+        String ramAmount = !Objects.equals(config.get("ram-amount"), "null") ? config.get("ram-amount") : "2048";
+        String ramType = !Objects.equals(config.get("ram-type"), "null") ? config.get("ram-type") : "M";
+
+        Application.rootWindow.ramAmount.setText(ramAmount);
+        Application.rootWindow.ramTypeBox.setValue(ramType);
+
         Application.rootWindow.profileSelector.setText(name);
         Application.rootWindow.getConsole().clearConsole();
         return this;
 
     }
 
-    public void unload() {
-        try {
-            this.executor.shutdown();
-            if (isRunning()) {
-                stopServer();
-                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) serverProcess.destroyForcibly();
-            }
-            if (inStream != null) inStream.close();
-            if (outStream != null) outStream.close();
 
-            config.put("ram-amount", Application.rootWindow.ramAmount.getText());
-            config.put("ram-type", Application.rootWindow.ramTypeBox.getValue());
-            config.save();
-        }
-        catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void updateSoftware(String type, String version) {
         config.put("type", type);
         this.type = type;
         this.version = version;
-        FetchJarRequest request = new FetchJarRequest(APIAsync.ENDPOINTS.getByType(type), version);
-        request.send().thenAccept(resp -> resp.writeToFile(this.location.toString() + "/server.jar"));
         this.executable = type.equals("forge") ? Paths.get(this.location.toString(), "run.bat") : Paths.get(this.location.toString(), "server.jar");
+        Application.rootWindow.getConsole().log(Sender.DOWNLOAD, "Downloading %s %s...".formatted(type, version));
+        FetchJarRequest request = new FetchJarRequest(APIAsync.ENDPOINTS.getByType(type), version);
+        request.send().thenAccept(resp -> {
+            if (type.equals("forge")) resp.generateForgeScripts(this.location.toString());
+            else resp.writeToFile(this.location.toString() + "/server.jar");
+        });
     }
 
-    public void startServer(int ramAmount, String ramType) {
-        Runnable serverProc = ()-> {
-            //Future proofing
-            List<String> args = new ArrayList<>();
-            args.add("-Xmx%s%s".formatted(ramAmount, ramType));
-            args.add("-Xms1G");
-
-            try {
-                if (this.type.equals("forge")) {
-                    Platform.runLater(() -> Application.rootWindow.getConsole().log(Sender.INFO, "Updating forge run scripts"));
-                    Path jvmArgs = Paths.get(this.location.toString(), "user_jvm_args.txt");
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(jvmArgs.toFile())));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (line.contains("-Xmx")) line = args.get(0);
-                        sb.append(line).append("\n");
-                    }
-                    reader.close();
-                    byte[] updatedFileBytes = sb.toString().getBytes();
-
-                    FileOutputStream fileWriter = new FileOutputStream(jvmArgs.toFile());
-                    fileWriter.write(updatedFileBytes, 0, updatedFileBytes.length);
-                    fileWriter.flush();
-                    fileWriter.close();
-                    Platform.runLater(()-> Application.rootWindow.getConsole().log(Sender.INFO, "Forge run scripts updated"));
-                }
-                Platform.runLater(()-> Application.rootWindow.getConsole().log(Sender.MINECRAFT, "Starting server"));
-                ProcessBuilder builder = this.type.equals("forge") ? new ProcessBuilder("cmd", "/c", executable.toString()) : new ProcessBuilder("java", "-jar", args.get(0), args.get(1), executable.toString(), "nogui");
-                builder.directory(this.location.toFile());
-
-                serverProcess = builder.start();
-
-                this.outStream = new PrintWriter(new OutputStreamWriter(serverProcess.getOutputStream()));
-                this.inStream = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
-
-                String line;
-                while (serverProcess.isAlive()) {
-                    if ((line = inStream.readLine()) != null) {
-                        String finalLine = line;
-                        Platform.runLater(()-> Application.rootWindow.getConsole().log(Sender.MINECRAFT, finalLine));
-                    }
-                }
-
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        };
-        this.executor.execute(serverProc);
+    public void startServer() {
+        ServerWorker.startServer(this);
     }
 
     public void stopServer() {
-        try {
-            outStream.write("stop");
-            outStream.flush();
-            outStream.close();
-            outStream = null;
-            inStream.close();
-            inStream = null;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        ServerWorker.stopServerSafe();
+    }
+
+    public void unload() {
+        config.put("ram-amount", Application.rootWindow.ramAmount.getText());
+        config.put("ram-type", Application.rootWindow.ramTypeBox.getValue());
+        config.save();
     }
 
     public void killServer() {
-        if (serverProcess.isAlive()) {
-            serverProcess.destroyForcibly();
-            Application.rootWindow.getConsole().log(Sender.WARN, "Server closed forcibly");
-        }
-    }
-
-    public void sendCommand(String command) {
-        if (isRunning()) {
-            this.outStream.println(command);
-        }
-        else {
-            Application.rootWindow.getConsole().err("No server is running");
-        }
+        ServerWorker.killServer();
     }
 
     public void changeToProfile(ActionEvent event) {
@@ -187,16 +110,12 @@ public class Profile extends MenuItem implements Serializable {
 
     @Override
     public String toString() {
-        String string = """
+        return """
                 name: %s
                 location: %s
                 executable: %S
                 type: %s
                 version: %s
-                executor: %s
-                serverProcess: %s
-                outStream: %s
-                inStream: %s
                 config: %s
                 running: %s
                 """.formatted(
@@ -205,14 +124,9 @@ public class Profile extends MenuItem implements Serializable {
                         executable,
                         type,
                         version,
-                        executor,
-                        serverProcess,
-                        outStream,
-                        inStream,
                         config,
                         isRunning()
                     );
-        return string;
     }
 
     @Serial
@@ -220,7 +134,7 @@ public class Profile extends MenuItem implements Serializable {
         out.writeUTF(name);
         out.writeUTF(location.toString());
         out.writeUTF(executable.toString());
-        out.writeUTF(type.toString());
+        out.writeUTF(type);
         out.writeUTF(version);
 
     }
@@ -241,6 +155,6 @@ public class Profile extends MenuItem implements Serializable {
     }
 
     public boolean isRunning() {
-        return this.serverProcess != null && this.serverProcess.isAlive();
+        return Application.rootWindow.activeProfile == this && ServerWorker.isServerRunning();
     }
 }
