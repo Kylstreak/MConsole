@@ -11,6 +11,7 @@ import javafx.scene.control.MenuItem;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -41,18 +42,7 @@ public class Profile extends MenuItem implements Serializable {
 
 
         updateSoftware(type, version);
-        File eula = Paths.get(location, "eula.txt").toFile();
 
-        try (FileOutputStream fileOutputStream = new FileOutputStream(eula)) {
-            if (!eula.exists()) {
-                eula.createNewFile();
-
-                byte[] agreement = "eula=true".getBytes(StandardCharsets.UTF_8);
-                fileOutputStream.write(agreement, 0, agreement.length);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         return this;
     }
 
@@ -87,6 +77,14 @@ public class Profile extends MenuItem implements Serializable {
     }
 
     public void startServer() {
+        Path eula = location.resolve("eula.txt");
+        String eulaText = "eula=true";
+        try {
+            Files.writeString(eula, eulaText);
+        }
+        catch (IOException e) {
+            Application.rootWindow.getConsole().log(Sender.ERROR, "Failed to write eula.txt");
+        }
         ServerWorker.startServer(this);
     }
 

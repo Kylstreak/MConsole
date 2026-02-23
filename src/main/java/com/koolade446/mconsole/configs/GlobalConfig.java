@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+//TODO: use GSON
 public class GlobalConfig extends HashMap<String, String> {
     private final File file;
 

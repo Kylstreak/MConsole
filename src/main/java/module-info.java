@@ -19,4 +19,5 @@ module com.koolade446.mconsole {
     exports com.koolade446.mconsole.profiles;
     opens com.koolade446.mconsole.controlers to javafx.fxml;
     opens com.koolade446.mconsole.api.centrojar to com.google.gson;
+    opens com.koolade446.mconsole.configs to com.google.gson;
 }

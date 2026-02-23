@@ -112,6 +112,9 @@ public class ProfileController {
         softwareVersionSelector.setValue(profile.version);
 
         createButton.setOnAction(this::update);
+        createButton.setText("Update");
+
+        updateVersions(null);
     }
 
     public void cancel(ActionEvent ignoredActionEvent) {

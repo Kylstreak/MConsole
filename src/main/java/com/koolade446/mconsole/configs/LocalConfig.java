@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Objects;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
+//TODO: use GSON
 public class LocalConfig extends HashMap<String, String> {
     private final File file;
 
